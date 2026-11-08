@@ -1,0 +1,64 @@
+# Publishes agenticweb-cli to npm when a GitHub release is published.
+# Uses npm trusted publishing (OIDC): no npm token is stored anywhere, and npm adds a provenance
+# attestation showing the package was built from this repository and commit.
+# Run it by hand ("Run workflow") for a dry run that builds and checks everything without publishing.
+name: Release
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run: build and check, don't publish"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # Lets GitHub issue the short-lived identity token npm checks instead of a password or token.
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          # Trusted publishing needs Node 22.14+ and npm 11.5.1+.
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+          cache: npm
+      - name: Use a recent npm
+        run: npm install -g npm@11
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - name: Build the package
+        run: npm run build
+      - name: Smoke test the built CLI
+        run: node packages/cli/dist/agenticweb.mjs --help
+      - name: Check the release tag matches the package version
+        if: github.event_name == 'release'
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          VERSION=$(node -p "require('./packages/cli/package.json').version")
+          if [ "${TAG#v}" != "$VERSION" ]; then
+            echo "Release tag $TAG doesn't match packages/cli/package.json version $VERSION." >&2
+            exit 1
+          fi
+      - name: Publish to npm (dry run)
+        if: github.event_name == 'workflow_dispatch' && inputs.dry_run
+        run: npm publish -w packages/cli --access public --dry-run
+      - name: Publish to npm
+        if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && !inputs.dry_run)
+        # Prereleases (e.g. 0.2.0-beta.1) go to the "next" tag so they don't become the default install.
+        run: npm publish -w packages/cli --access public ${{ github.event.release.prerelease && '--tag next' || '' }}

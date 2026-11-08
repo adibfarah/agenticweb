@@ -65,6 +65,18 @@ A connector implements `Connector` from `packages/actions/src/types.ts`:
 
 Add tests against a small fake API (see `packages/actions/test/actions.test.ts`), and add a mock to `examples/serve.ts` if it helps the demo.
 
+## Releasing (maintainers)
+
+The npm package is `agenticweb-cli`. It is published by GitHub Actions (`.github/workflows/release.yml`) using npm trusted publishing: no npm token is stored, and npm shows a provenance badge linking each version to the commit it was built from.
+
+1. Set the new version in `packages/cli/package.json`, for example `0.1.1`. Commit and push.
+2. On GitHub, create a release with the tag `v0.1.1` and publish it. The workflow tests, builds and publishes. It stops if the tag and the package version don't match.
+3. A release marked as a pre-release (for example `v0.2.0-beta.1`) is published under the `next` tag, so it doesn't become the default install.
+
+To check the workflow without publishing, open **Actions**, choose **Release**, then **Run workflow**, and leave **Dry run** ticked.
+
+The trusted publisher is set on npmjs.com under the package's **Settings**: GitHub user `adibfarah`, repository `agenticweb`, workflow `release.yml`.
+
 ## Ground rules
 
 - Site content is untrusted. Prompts must keep it inside tags and say it is data, not instructions.
