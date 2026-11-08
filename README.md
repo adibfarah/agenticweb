@@ -46,18 +46,18 @@ npx agenticweb-cli serve --edge
 
 ## Do I need an AI key?
 
-**No.** Everything works without one: the agent version, MCP, bookings and checkout, edge mode, verified agents, the parity proof and the readiness score. The benchmark above was run with no AI key at all.
+**No.** AgenticWeb works fully without one. The benchmark above was run with no AI key at all.
 
-A key is optional and adds a few extras:
+**What an AI provider is for:** it's the AI that AgenticWeb can call on for a few optional extras. The core work never depends on it: building the agent version, the safety checks, bookings and checkout all run on AgenticWeb's own rules.
 
 | | Without a key | With a key |
 |---|---|---|
-| Reading your site | Built-in rules, good for well-built sites | Smarter on messy pages, and PDFs with Claude |
-| `/ask` answers | The matching facts, with sources | A short written answer, with sources |
-| `agenticweb test` | Quick checks with fixed answers | A real AI agent does each task |
-| `agenticweb suggest` | The question, for you to answer | A drafted answer from your own site's facts |
+| Reading your site | Built-in rules, good for well-built sites | Smarter on messy pages (and PDFs, with Claude) |
+| Answering agents' questions | The matching facts, with sources | A short written answer, with sources |
+| Testing your site as an agent | Quick checks with set answers | A real AI agent tries each task |
+| Questions your site can't answer yet | The question, for you to answer | A draft answer from your site's own facts |
 
-Use whichever AI you like: Claude (default), OpenAI, DeepSeek, Gemini, or a free local model with Ollama or LM Studio. Set it with one line in the config; the [guide](docs/GUIDE.md#choosing-an-ai-provider) shows how. The key stays on your machine or your server, and requests go straight to the provider you chose.
+**Pick any provider:** Claude (the default), OpenAI, DeepSeek, Gemini, or a free model running on your own computer (Ollama or LM Studio). It's one line in the config, and the [guide](docs/GUIDE.md#choosing-an-ai-provider) shows how. Your key stays on your computer or server, and requests go straight to the provider you chose, never to us.
 
 ## Put it on your site
 

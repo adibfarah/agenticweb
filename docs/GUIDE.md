@@ -35,7 +35,9 @@ npx agenticweb-cli build
 
 ### Choosing an AI provider
 
-Claude is the default. OpenAI, DeepSeek, Gemini, or any OpenAI-compatible API (including local ones such as Ollama or LM Studio) work too. Set `llm.provider` in `agenticweb.config.json` and put the key in the matching environment variable:
+An AI provider is optional. It powers four extras: smarter reading of your site, written answers on `/ask`, AI-run readiness tests, and drafted answers in `suggest`. Everything else works without one.
+
+Claude is the default. OpenAI, DeepSeek, Gemini, or any OpenAI-compatible API (including free local ones such as Ollama or LM Studio) work too. Set `llm.provider` in `agenticweb.config.json` and put the key in the matching environment variable:
 
 | `llm.provider` | Key variable | Default model |
 |---|---|---|
