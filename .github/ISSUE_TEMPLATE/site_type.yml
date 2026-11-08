@@ -1,0 +1,28 @@
+name: Support my kind of site
+description: Tell us about a site type AgenticWeb should handle better
+labels: [site-type]
+body:
+  - type: input
+    id: kind
+    attributes:
+      label: What kind of site?
+      placeholder: "Dental clinic, hotel, SaaS docs, event venue…"
+    validations:
+      required: true
+  - type: textarea
+    id: tasks
+    attributes:
+      label: What should agents be able to do there?
+      description: Questions they should answer and actions they should take.
+      placeholder: "Find opening hours, check insurance accepted, book a cleaning…"
+    validations:
+      required: true
+  - type: textarea
+    id: systems
+    attributes:
+      label: Which systems does the site use?
+      description: CMS, booking tool, shop platform, payment provider…
+  - type: input
+    id: url
+    attributes:
+      label: Example URL (optional, public sites only)

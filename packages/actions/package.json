@@ -1,0 +1,16 @@
+{
+  "name": "@agenticweb-dev/actions",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Action engine (confirmations, idempotency, audit) and connectors for Shopify, WooCommerce, Cal.com, Stripe, OpenAPI, HTTP and HTML forms.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./file-store": "./src/file-store.ts"
+  },
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@agenticweb-dev/core": "0.1.0",
+    "@agenticweb-dev/runtime": "0.1.0"
+  }
+}

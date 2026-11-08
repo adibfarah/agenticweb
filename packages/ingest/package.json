@@ -1,0 +1,19 @@
+{
+  "name": "@agenticweb-dev/ingest",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Crawler, sitemap/robots, HTML to Markdown, form and JSON-LD extraction.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@agenticweb-dev/core": "0.1.0",
+    "linkedom": "^0.18.15",
+    "turndown": "^7.2.5"
+  },
+  "optionalDependencies": {
+    "playwright": "^1.65.0"
+  }
+}

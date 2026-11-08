@@ -1,0 +1,289 @@
+{
+  "mode": "heuristic",
+  "lookups": [
+    {
+      "id": "sunday-close",
+      "site": "restaurant",
+      "question": "What time does Bella Cucina close on Sunday?",
+      "human": {
+        "success": true,
+        "requests": 1,
+        "tokens": 641
+      },
+      "agent": {
+        "success": true,
+        "requests": 1,
+        "tokens": 406
+      }
+    },
+    {
+      "id": "cacio-price",
+      "site": "restaurant",
+      "question": "How much is the cacio e pepe?",
+      "human": {
+        "success": true,
+        "requests": 1,
+        "tokens": 641
+      },
+      "agent": {
+        "success": true,
+        "requests": 1,
+        "tokens": 269
+      }
+    },
+    {
+      "id": "vegan-pizza",
+      "site": "restaurant",
+      "question": "Which pizza is vegan?",
+      "human": {
+        "success": true,
+        "requests": 2,
+        "tokens": 2217
+      },
+      "agent": {
+        "success": true,
+        "requests": 1,
+        "tokens": 270
+      }
+    },
+    {
+      "id": "dogs",
+      "site": "restaurant",
+      "question": "Are dogs allowed?",
+      "human": {
+        "success": true,
+        "requests": 4,
+        "tokens": 3510
+      },
+      "agent": {
+        "success": true,
+        "requests": 1,
+        "tokens": 160
+      }
+    },
+    {
+      "id": "cancel",
+      "site": "restaurant",
+      "question": "How much notice do I need to give to cancel a booking?",
+      "human": {
+        "success": true,
+        "requests": 1,
+        "tokens": 641
+      },
+      "agent": {
+        "success": true,
+        "requests": 1,
+        "tokens": 356
+      }
+    },
+    {
+      "id": "gluten-free",
+      "site": "restaurant",
+      "question": "How much extra is gluten-free pasta?",
+      "human": {
+        "success": true,
+        "requests": 2,
+        "tokens": 2217
+      },
+      "agent": {
+        "success": true,
+        "requests": 1,
+        "tokens": 310
+      }
+    },
+    {
+      "id": "phone",
+      "site": "restaurant",
+      "question": "What is the restaurant's phone number?",
+      "human": {
+        "success": true,
+        "requests": 1,
+        "tokens": 641
+      },
+      "agent": {
+        "success": true,
+        "requests": 1,
+        "tokens": 166
+      }
+    },
+    {
+      "id": "private-room",
+      "site": "restaurant",
+      "question": "How many guests does the private dining room seat?",
+      "human": {
+        "success": true,
+        "requests": 3,
+        "tokens": 2798
+      },
+      "agent": {
+        "success": true,
+        "requests": 1,
+        "tokens": 238
+      }
+    },
+    {
+      "id": "tee-price",
+      "site": "shop",
+      "question": "How much is the Everyday Tee?",
+      "human": {
+        "success": true,
+        "requests": 2,
+        "tokens": 1131
+      },
+      "agent": {
+        "success": true,
+        "requests": 1,
+        "tokens": 411
+      }
+    },
+    {
+      "id": "sale-returns",
+      "site": "shop",
+      "question": "Can I return sale items, and within how many days?",
+      "human": {
+        "success": true,
+        "requests": 4,
+        "tokens": 2012
+      },
+      "agent": {
+        "success": true,
+        "requests": 1,
+        "tokens": 323
+      }
+    },
+    {
+      "id": "free-shipping",
+      "site": "shop",
+      "question": "What is the minimum order for free shipping?",
+      "human": {
+        "success": true,
+        "requests": 1,
+        "tokens": 534
+      },
+      "agent": {
+        "success": true,
+        "requests": 1,
+        "tokens": 170
+      }
+    },
+    {
+      "id": "chinos-price",
+      "site": "shop",
+      "question": "What does the Relaxed Chinos cost?",
+      "human": {
+        "success": true,
+        "requests": 2,
+        "tokens": 1131
+      },
+      "agent": {
+        "success": true,
+        "requests": 1,
+        "tokens": 426
+      }
+    },
+    {
+      "id": "sms-limit",
+      "site": "docs",
+      "question": "What is the SMS body character limit?",
+      "human": {
+        "success": true,
+        "requests": 4,
+        "tokens": 1842
+      },
+      "agent": {
+        "success": true,
+        "requests": 1,
+        "tokens": 299
+      }
+    },
+    {
+      "id": "pro-price",
+      "site": "docs",
+      "question": "How much is the Pro plan per month?",
+      "human": {
+        "success": true,
+        "requests": 6,
+        "tokens": 2796
+      },
+      "agent": {
+        "success": true,
+        "requests": 1,
+        "tokens": 202
+      }
+    },
+    {
+      "id": "pro-rate",
+      "site": "docs",
+      "question": "What is the rate limit on the Pro plan?",
+      "human": {
+        "success": true,
+        "requests": 5,
+        "tokens": 2326
+      },
+      "agent": {
+        "success": true,
+        "requests": 1,
+        "tokens": 214
+      }
+    },
+    {
+      "id": "auth",
+      "site": "docs",
+      "question": "How do I send my API key?",
+      "human": {
+        "success": true,
+        "requests": 3,
+        "tokens": 1347
+      },
+      "agent": {
+        "success": true,
+        "requests": 1,
+        "tokens": 350
+      }
+    }
+  ],
+  "actions": [
+    {
+      "id": "book-table",
+      "human": {
+        "success": true,
+        "requests": 3,
+        "tokens": 1414,
+        "note": "form submitted blind; no machine-readable result or confirmation"
+      },
+      "agent": {
+        "success": true,
+        "requests": 2,
+        "tokens": 138,
+        "note": "guest confirms by email; status is machine-readable"
+      }
+    },
+    {
+      "id": "checkout-blue-hoodie-m",
+      "human": {
+        "success": false,
+        "requests": 2,
+        "tokens": 1481,
+        "note": "variant stock is rendered by JavaScript; adding to cart needs a browser session"
+      },
+      "agent": {
+        "success": true,
+        "requests": 1,
+        "tokens": 90
+      }
+    }
+  ],
+  "totals": {
+    "human": {
+      "success": 17,
+      "requests": 47,
+      "tokens": 29320
+    },
+    "agent": {
+      "success": 18,
+      "requests": 19,
+      "tokens": 4798
+    },
+    "tasks": 18
+  }
+}

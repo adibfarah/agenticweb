@@ -1,0 +1,63 @@
+{
+  "name": "agenticweb-cli",
+  "version": "0.1.0",
+  "description": "Turn a website you own into an agent-ready site: llms.txt, schema.org data, an MCP server and safe actions.",
+  "keywords": [
+    "ai-agents",
+    "mcp",
+    "llms-txt",
+    "schema-org",
+    "agentic-commerce",
+    "claude",
+    "webmcp",
+    "web-bot-auth",
+    "ucp",
+    "acp",
+    "cli"
+  ],
+  "homepage": "https://github.com/adibfarah/agenticweb",
+  "bugs": {
+    "url": "https://github.com/adibfarah/agenticweb/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adibfarah/agenticweb.git"
+  },
+  "license": "Apache-2.0",
+  "author": "Adib Farah",
+  "type": "module",
+  "exports": {
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "agenticweb": "dist/agenticweb.mjs"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=22.18"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {},
+  "optionalDependencies": {
+    "playwright": "^1.65.0"
+  },
+  "devDependencies": {
+    "@agenticweb-dev/core": "0.1.0",
+    "@agenticweb-dev/ingest": "0.1.0",
+    "@agenticweb-dev/understand": "0.1.0",
+    "@agenticweb-dev/emitters": "0.1.0",
+    "@agenticweb-dev/runtime": "0.1.0",
+    "@agenticweb-dev/review": "0.1.0",
+    "@hono/node-server": "^2.1.6",
+    "@agenticweb-dev/actions": "0.1.0",
+    "esbuild": "^0.28.2",
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "zod": "^4.6.7"
+  }
+}

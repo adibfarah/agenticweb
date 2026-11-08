@@ -1,0 +1,8 @@
+{%- comment -%}
+  AgenticWeb: points AI agents to this store's agent branch.
+  1. Create a theme setting or edit the URL below.
+  2. Add {% render 'agenticweb-head' %} inside <head> in layout/theme.liquid.
+{%- endcomment -%}
+{%- assign agenticweb_url = settings.agenticweb_url | default: 'https://agents.example.com' -%}
+<link rel="alternate" type="application/json" href="{{ agenticweb_url }}/.well-known/agent-site.json" title="Agent branch">
+<link rel="alternate" type="text/markdown" href="{{ agenticweb_url }}/llms.txt" title="llms.txt">

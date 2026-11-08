@@ -1,0 +1,17 @@
+{
+  "name": "@agenticweb-dev/understand",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Turns crawled pages into a Site Graph using Claude, with a heuristic fallback.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@agenticweb-dev/core": "0.1.0",
+    "@agenticweb-dev/ingest": "0.1.0",
+    "@anthropic-ai/sdk": "^1.6.0",
+    "zod": "^4.6.7"
+  }
+}

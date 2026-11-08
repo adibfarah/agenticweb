@@ -1,0 +1,14 @@
+{
+  "name": "@agenticweb-dev/emitters",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Generates agent-branch files (llms.txt, Markdown, schema.org JSON, manifest, OpenAPI) from a Site Graph.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@agenticweb-dev/core": "0.1.0"
+  }
+}

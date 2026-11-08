@@ -1,0 +1,12 @@
+{
+  "name": "@agenticweb-dev/core",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Site Graph schemas and shared types for AgenticWeb.",
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "license": "Apache-2.0",
+  "dependencies": {
+    "zod": "^4.6.7"
+  }
+}

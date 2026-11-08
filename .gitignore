@@ -1,0 +1,25 @@
+node_modules/
+dist/
+coverage/
+.turbo/
+*.log
+.env
+.env.*
+!.env.example
+
+# Local working memory and handoff notes (never pushed)
+.memory/
+
+# Generated output
+agent-branch/
+.agenticweb/
+
+# Built package files
+packages/cli/README.md
+packages/cli/LICENSE
+agent-server/
+agent-worker/
+
+# Local Claude memory (kept off the repo)
+.claude/
+CLAUDE.md

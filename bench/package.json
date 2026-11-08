@@ -1,0 +1,18 @@
+{
+  "name": "@agenticweb-dev/bench",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Benchmark: agent tasks on the human site vs the agent branch.",
+  "type": "module",
+  "scripts": {
+    "start": "node run.ts"
+  },
+  "dependencies": {
+    "@agenticweb-dev/core": "0.1.0",
+    "@agenticweb-dev/ingest": "0.1.0",
+    "@agenticweb-dev/understand": "0.1.0",
+    "@agenticweb-dev/runtime": "0.1.0",
+    "@agenticweb-dev/actions": "0.1.0",
+    "@agenticweb-dev/examples": "0.1.0"
+  }
+}

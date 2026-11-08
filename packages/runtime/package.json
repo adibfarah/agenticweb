@@ -1,0 +1,23 @@
+{
+  "name": "@agenticweb-dev/runtime",
+  "private": true,
+  "version": "0.1.0",
+  "description": "The agent-branch server: static files, /ask, search, MCP and actions. Runs on Node, Cloudflare Workers, Deno and Bun.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./node": "./src/node.ts"
+  },
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@agenticweb-dev/core": "0.1.0",
+    "@agenticweb-dev/emitters": "0.1.0",
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "hono": "^4.13.17",
+    "@hono/node-server": "^2.1.6",
+    "zod": "^4.6.7"
+  },
+  "optionalDependencies": {
+    "@anthropic-ai/sdk": "^1.6.0"
+  }
+}

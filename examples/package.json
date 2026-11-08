@@ -1,0 +1,16 @@
+{
+  "name": "@agenticweb-dev/examples",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Demo sites (restaurant, shop, docs) used for tests, demos and the benchmark.",
+  "type": "module",
+  "exports": {
+    ".": "./serve.ts",
+    "./restaurant": "./sites/restaurant.ts",
+    "./shop": "./sites/shop.ts",
+    "./docs": "./sites/docs.ts"
+  },
+  "scripts": {
+    "start": "tsx serve.ts"
+  }
+}

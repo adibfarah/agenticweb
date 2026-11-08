@@ -1,0 +1,6 @@
+{
+  "name": "@agenticweb-dev/claude-code-plugin",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Claude Code plugin: /agentify, /agent-review, /agent-deploy and the agentify-site skill."
+}
