@@ -40,9 +40,24 @@ npx agenticweb-cli serve --edge
 ```
 
 - **init** starts a project and asks you to prove you own the site (a DNS record or a small file).
-- **build** reads your site and pulls out what matters: pages, products, menus, hours, FAQs and policies. With an AI key it uses Claude by default, or OpenAI, DeepSeek, Gemini or a local model if you prefer ([how](docs/GUIDE.md#choosing-an-ai-provider)). Without one, built-in rules still do a good job.
+- **build** reads your site and pulls out what matters: pages, products, menus, hours, FAQs and policies.
 - **review** opens a page where you choose what agents can see and which actions they can use. Everything starts off.
 - **serve --edge** shows your site with the agent version added, at `http://127.0.0.1:8787`.
+
+## Do I need an AI key?
+
+**No.** Everything works without one: the agent version, MCP, bookings and checkout, edge mode, verified agents, the parity proof and the readiness score. The benchmark above was run with no AI key at all.
+
+A key is optional and adds a few extras:
+
+| | Without a key | With a key |
+|---|---|---|
+| Reading your site | Built-in rules, good for well-built sites | Smarter on messy pages, and PDFs with Claude |
+| `/ask` answers | The matching facts, with sources | A short written answer, with sources |
+| `agenticweb test` | Quick checks with fixed answers | A real AI agent does each task |
+| `agenticweb suggest` | The question, for you to answer | A drafted answer from your own site's facts |
+
+Use whichever AI you like: Claude (default), OpenAI, DeepSeek, Gemini, or a free local model with Ollama or LM Studio. Set it with one line in the config; the [guide](docs/GUIDE.md#choosing-an-ai-provider) shows how. The key stays on your machine or your server, and requests go straight to the provider you chose.
 
 ## Put it on your site
 
