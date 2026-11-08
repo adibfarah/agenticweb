@@ -67,15 +67,17 @@ Add tests against a small fake API (see `packages/actions/test/actions.test.ts`)
 
 ## Releasing (maintainers)
 
-The npm package is `agenticweb-cli`. It is published by GitHub Actions (`.github/workflows/release.yml`) using npm trusted publishing: no npm token is stored, and npm shows a provenance badge linking each version to the commit it was built from.
+The npm package is `agenticweb-cli`. The maintainer publishes it by hand with 2FA, so npm shows the maintainer as the publisher.
 
-1. Set the new version in `packages/cli/package.json`, for example `0.1.1`. Commit and push.
-2. On GitHub, create a release with the tag `v0.1.1` and publish it. The workflow tests, builds and publishes. It stops if the tag and the package version don't match.
-3. A release marked as a pre-release (for example `v0.2.0-beta.1`) is published under the `next` tag, so it doesn't become the default install.
+1. Set the new version in `packages/cli/package.json`, for example `0.1.2`. Commit and push.
+2. Build and publish from the repository root (npm asks you to confirm with your 2FA):
+   ```bash
+   npm run build
+   npm publish -w packages/cli --access public --auth-type=web
+   ```
+3. On GitHub, create a release with the tag `v0.1.2`. The **Release check** workflow (`.github/workflows/release.yml`) tests and builds that commit, checks the tag matches the package version, and shows what npm would publish. You can also run it by hand from **Actions** before publishing.
 
-To check the workflow without publishing, open **Actions**, choose **Release**, then **Run workflow**, and leave **Dry run** ticked.
-
-The trusted publisher is set on npmjs.com under the package's **Settings**: GitHub user `adibfarah`, repository `agenticweb`, workflow `release.yml`.
+For a pre-release (for example `0.2.0-beta.1`), add `--tag next` to the publish command so it doesn't become the default install.
 
 ## Ground rules
 

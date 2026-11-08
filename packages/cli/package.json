@@ -1,6 +1,6 @@
 {
   "name": "agenticweb-cli",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Turn a website you own into an agent-ready site: llms.txt, schema.org data, an MCP server and safe actions.",
   "keywords": [
     "ai-agents",
