@@ -40,7 +40,7 @@ npx agenticweb-cli serve --edge
 ```
 
 - **init** starts a project and asks you to prove you own the site (a DNS record or a small file).
-- **build** reads your site and pulls out what matters: pages, products, menus, hours, FAQs and policies. With an `ANTHROPIC_API_KEY` it uses Claude. Without one, built-in rules still do a good job.
+- **build** reads your site and pulls out what matters: pages, products, menus, hours, FAQs and policies. With an AI key it uses Claude by default, or OpenAI, DeepSeek, Gemini or a local model if you prefer ([how](docs/GUIDE.md#choosing-an-ai-provider)). Without one, built-in rules still do a good job.
 - **review** opens a page where you choose what agents can see and which actions they can use. Everything starts off.
 - **serve --edge** shows your site with the agent version added, at `http://127.0.0.1:8787`.
 
@@ -62,7 +62,7 @@ This prepares a Cloudflare Worker for your domain. Not on Cloudflare? Use `--tar
 | Markdown pages | Any page, as clean text, when an agent asks for it |
 | Product and business data | Prices, stock, hours and FAQs in the standard schema.org format |
 | `/.agent/ask` | Ask a question in plain words and get an answer with sources |
-| MCP server | Your site as tools for Claude and other AI apps |
+| MCP server | Your site as tools for ChatGPT, Claude, Gemini, Cursor and other AI apps |
 | WebMCP | The same tools for AI agents built into browsers |
 | UCP and ACP checkout | The checkout protocols shopping agents use, for any store, not only Shopify |
 

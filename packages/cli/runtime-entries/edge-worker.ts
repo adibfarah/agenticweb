@@ -1,7 +1,7 @@
 // Entry point of the edge Worker (agent-edge/worker.js): runs on a route in front of the human site.
 // The site's data comes from site-data.js, written next to it at deploy time.
 import { ProjectConfig, SiteGraph } from "@agenticweb-dev/core";
-import { createClaudeAsker, createEdge, type FetchHandler } from "@agenticweb-dev/runtime";
+import { askerFor, createEdge, type FetchHandler } from "@agenticweb-dev/runtime";
 import { KvStore, MemoryStore, createEngine, parseApiKeys, type KvLike } from "@agenticweb-dev/actions";
 import { config as configJson, graph as graphJson } from "./site-data.js";
 
@@ -17,7 +17,7 @@ export default {
       const { AGENTICWEB_KV, ...vars } = env;
       const store = AGENTICWEB_KV ? new KvStore(AGENTICWEB_KV) : new MemoryStore();
       const engine = graph.actions.some((a) => a.enabled) ? createEngine({ graph, config, env: vars, store }) : undefined;
-      const llm = config.llm.enabled && vars.ANTHROPIC_API_KEY ? await createClaudeAsker({ apiKey: vars.ANTHROPIC_API_KEY }) : undefined;
+      const llm = await askerFor(config.llm, vars);
       edge = createEdge(
         {
           graph,

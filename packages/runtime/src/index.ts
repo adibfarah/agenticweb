@@ -7,6 +7,6 @@ export * from "./mcp.ts";
 export * from "./engine.ts";
 export * from "./ratelimit.ts";
 export * from "./analytics.ts";
-export { createClaudeAsker } from "./claude.ts";
+export { askerFor, createClaudeAsker } from "./claude.ts";
 export * from "./botauth.ts";
 export * from "./policy.ts";

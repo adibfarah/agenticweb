@@ -2,7 +2,7 @@ import { existsSync } from "node:fs";
 import { copyFile, mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import type { ProjectConfig, SiteGraph } from "@agenticweb-dev/core";
+import { PROVIDERS, type ProjectConfig, type SiteGraph } from "@agenticweb-dev/core";
 import { UserError, type Project } from "./project.ts";
 import type { RuntimeKind } from "./bundle.ts";
 
@@ -26,7 +26,7 @@ export function requiredEnv(graph: SiteGraph, config: ProjectConfig, target = "n
     for (const v of Object.values((c.headers as Record<string, string>) ?? {})) if (v.startsWith("env:")) env.set(v.slice(4), `Header value for ${a.name}`);
   }
   if (config.notifications.email === "resend") env.set(config.notifications.apiKeyEnv, "Resend API key (confirmation emails)");
-  env.set("ANTHROPIC_API_KEY", "Optional: written answers on /ask");
+  if (config.llm.enabled) env.set(config.llm.apiKeyEnv ?? PROVIDERS[config.llm.provider].apiKeyEnv, `Optional: ${PROVIDERS[config.llm.provider].label} key for written answers on /ask`);
   env.set(config.runtime.apiKeysEnv, 'Optional: agent API keys as "key:agent-name,key2:other"');
   return [...env];
 }

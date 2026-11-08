@@ -3,9 +3,9 @@ import { appendFile, mkdir } from "node:fs/promises";
 import path from "node:path";
 import { serve } from "@hono/node-server";
 import { createReviewApp } from "@agenticweb-dev/review";
-import { createClaudeAsker, type ActionEngine, type AskLlm, type TrafficEvent } from "@agenticweb-dev/runtime";
+import { askerFor, type ActionEngine, type AskLlm, type TrafficEvent } from "@agenticweb-dev/runtime";
 import { serveNode } from "@agenticweb-dev/runtime/node";
-import { hasClaudeCredentials } from "@agenticweb-dev/understand";
+import { apiKeyEnvFor } from "@agenticweb-dev/understand";
 import { parseApiKeys } from "@agenticweb-dev/actions";
 import type { ProjectConfig, SiteGraph } from "@agenticweb-dev/core";
 import { Project } from "./project.ts";
@@ -42,8 +42,8 @@ export async function cmdServe(project: Project, opts: ServeOptions, out = { log
   const edge = opts.edge ? { ...config.edge, origin: opts.edge === true ? (config.edge.origin ?? config.site) : opts.edge, publicUrl } : undefined;
   // In edge mode the agent branch lives under the prefix on the proxied address.
   const baseUrl = edge ? `${publicUrl}${config.edge.prefix}` : (config.deploy.baseUrl ?? publicUrl);
-  let llm: AskLlm | undefined;
-  if (!opts.noLlm && config.llm.enabled && hasClaudeCredentials()) llm = await createClaudeAsker();
+  let llm: (AskLlm & { label: string }) | undefined;
+  if (!opts.noLlm) llm = await askerFor(config.llm, process.env);
   const hookSecret = opts.hookSecret ?? process.env.AGENTICWEB_HOOK_SECRET;
   const onTraffic = serveHooks.traffic?.(project);
   const engine = await serveHooks.engine?.(project, graph, config, baseUrl);
@@ -88,7 +88,7 @@ export async function cmdServe(project: Project, opts: ServeOptions, out = { log
   out.log(`  Ask:       ${agentUrl}/ask?q=your+question`);
   out.log(`  MCP:       ${agentUrl}/mcp`);
   out.log(`  Actions:   ${engine ? engine.actions().map((a) => a.name).join(", ") || "none enabled" : "none enabled"}`);
-  out.log(`  /ask uses: ${llm ? `Claude (${config.llm.askModel})` : "built-in search (set ANTHROPIC_API_KEY for written answers)"}`);
+  out.log(`  /ask uses: ${llm ? llm.label : `built-in search (set ${apiKeyEnvFor(config.llm)} for written answers)`}`);
   if (opts.syncEveryMinutes) out.log(`  Sync:      every ${opts.syncEveryMinutes} minutes`);
   if (hookSecret) out.log(`  Webhook:   POST ${agentUrl}/hooks/refresh (header x-agenticweb-secret)`);
   out.log("Press Ctrl+C to stop.");

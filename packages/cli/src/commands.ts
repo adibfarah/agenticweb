@@ -1,7 +1,7 @@
 import path from "node:path";
 import { ActionDef, ProjectConfig, entitiesByType, type ProjectConfigInput, type SiteGraph } from "@agenticweb-dev/core";
 import { crawl, isLocalHost, newVerifyToken, verifyOwnership } from "@agenticweb-dev/ingest";
-import { ClaudeLlm, hasClaudeCredentials, understand, type Llm } from "@agenticweb-dev/understand";
+import { apiKeyEnvFor, llmFromSettings, understand, type Llm } from "@agenticweb-dev/understand";
 import { discoverySnippets, emitAgentBranch } from "@agenticweb-dev/emitters";
 import { Project, UserError, writeFiles } from "./project.ts";
 
@@ -82,8 +82,13 @@ export async function cmdBuild(project: Project, opts: BuildOptions = {}, out: O
   let llm: Llm | undefined;
   if (opts.llm !== false && config.llm.enabled) {
     if (opts.llm) llm = opts.llm;
-    else if (hasClaudeCredentials()) llm = new ClaudeLlm();
-    else out.log("  No Anthropic credentials found: using built-in heuristics. Set ANTHROPIC_API_KEY for richer extraction.");
+    else {
+      const ai = llmFromSettings(config.llm);
+      if (ai) {
+        llm = ai.llm;
+        out.log(`  Reading the site with ${ai.label}.`);
+      } else out.log(`  No AI key found: using built-in rules. Set ${apiKeyEnvFor(config.llm)} for richer extraction.`);
+    }
   }
 
   const extra = opts.connectors

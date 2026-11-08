@@ -31,7 +31,33 @@ Local development sites (`localhost`, `127.0.0.1`, `*.test`, `*.localhost`) skip
 npx agenticweb-cli build
 ```
 
-- With `ANTHROPIC_API_KEY` set (or another Anthropic credential), Claude classifies pages, extracts products, menus, services and policies, reads PDFs, and names actions. The default model is `claude-opus-5-5`; change the `llm.*Model` settings to use another one.
+- With an AI key set, the AI classifies pages, extracts products, menus, services and policies, and names actions. Claude also reads PDFs. Without a key, built-in rules do the job. See [Choosing an AI provider](#choosing-an-ai-provider).
+
+### Choosing an AI provider
+
+Claude is the default. OpenAI, DeepSeek, Gemini, or any OpenAI-compatible API (including local ones such as Ollama or LM Studio) work too. Set `llm.provider` in `agenticweb.config.json` and put the key in the matching environment variable:
+
+| `llm.provider` | Key variable | Default model |
+|---|---|---|
+| `anthropic` (default) | `ANTHROPIC_API_KEY` | `claude-opus-5-5` |
+| `openai` | `OPENAI_API_KEY` | `gpt-6.1-sol` |
+| `deepseek` | `DEEPSEEK_API_KEY` | `deepseek-flash` |
+| `gemini` | `GEMINI_API_KEY` | `gemini-3-flash-preview` |
+| `openai-compatible` | `LLM_API_KEY` (optional for local servers) | none: set `llm.model` |
+
+```json
+"llm": { "provider": "deepseek" }
+```
+
+```json
+"llm": { "provider": "openai-compatible", "baseUrl": "http://localhost:11434/v1", "model": "llama4" }
+```
+
+- `llm.model` sets one model for every step. Providers release new models often, so set it if the default above is out of date.
+- `llm.apiKeyEnv` uses a different variable name for the key.
+- The provider is used everywhere AgenticWeb uses AI: reading the site, written `/ask` answers (locally and when deployed), `agenticweb test`, and `agenticweb suggest`.
+- Only Claude reads PDFs. Other providers skip them, like the built-in rules do.
+- Cost estimates in test reports are only shown for Claude models.
 - Without credentials, built-in rules extract JSON-LD, opening hours, FAQs, price lists and forms.
 - Rebuilds reuse the analysis of unchanged pages.
 
@@ -279,8 +305,8 @@ npx agenticweb-cli suggest
 
 This takes the questions agents asked that your site couldn't answer (from `/ask` and the MCP `ask` tool), plus any failed `agenticweb test` tasks, and drafts an FAQ answer for each one.
 
-- **With Claude**, a draft uses only facts already on your site. Anything it can't find is marked `[[fill in: …]]`, so it never guesses a price or a policy.
-- **Without Claude**, you get the question and an empty answer to fill in.
+- **With an AI key**, a draft uses only facts already on your site. Anything it can't find is marked `[[fill in: …]]`, so it never guesses a price or a policy.
+- **Without one**, you get the question and an empty answer to fill in.
 - Open `agenticweb review` and go to the **Suggestions** tab to edit, approve or dismiss each one. You can't approve a draft that still has blanks.
 - Each approved answer comes with HTML to paste into the right page: the visible FAQ entry plus matching schema.org `FAQPage` data.
 - The next `build` or `sync` reads it from your site, and the suggestion shows as **live**.
@@ -309,7 +335,7 @@ npx agenticweb-cli test
 ```
 
 - `expect` lists words or numbers the answer must contain. `action` names the action that finishes the task.
-- **With `ANTHROPIC_API_KEY`**, Claude does each task twice:
+- **With an AI key** (any provider above), the AI does each task twice:
   - on the agent branch, using its MCP tools;
   - on your human site, reading pages.
   You get success, requests, tokens and cost for both. The model is set in `tests.model` in the config.
@@ -397,6 +423,6 @@ AgenticWeb sends nothing to us. There is no telemetry. What it keeps stays on yo
 
 - **Before you go live:** say in your privacy policy that AI agents can make requests for your customers, that you keep the details they send (name and email for a booking), and that request logs include IP addresses.
 - **Retention:** set it in your hosting or log tool. Pending actions expire after `runtime.holdMinutes`.
-- **Claude:** if you set `ANTHROPIC_API_KEY`, your site's public content and agents' questions are sent to Anthropic's API to write answers. Guest details from actions are never sent.
+- **AI provider:** if you set an AI key, your site's public content and agents' questions are sent to that provider (Anthropic, OpenAI, DeepSeek, Google, or your own server) to write answers. Guest details from actions are never sent.
 - **Payments:** card details never pass through AgenticWeb.
 

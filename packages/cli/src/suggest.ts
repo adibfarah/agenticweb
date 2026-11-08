@@ -4,7 +4,7 @@ import path from "node:path";
 import { z } from "zod";
 import type { SiteGraph } from "@agenticweb-dev/core";
 import { SearchIndex } from "@agenticweb-dev/runtime";
-import { ClaudeLlm, hasClaudeCredentials, type Llm } from "@agenticweb-dev/understand";
+import { llmFromSettings, type Llm } from "@agenticweb-dev/understand";
 import { Project } from "./project.ts";
 import { REPORT_DIR, type ReadinessReport } from "./readiness.ts";
 
@@ -204,7 +204,7 @@ export async function refreshSuggestions(project: Project, opts: { days?: number
   const gaps = (await findGaps(project, opts.days)).filter((x) => !known.has(normQ(x.question)) && !siteText.includes(normQ(x.question))).slice(0, 30);
   let llm: Llm | undefined;
   if (opts.llm) llm = opts.llm;
-  else if (opts.llm !== false && config.llm.enabled && hasClaudeCredentials()) llm = new ClaudeLlm();
+  else if (opts.llm !== false) llm = llmFromSettings(config.llm)?.llm;
   const added = gaps.length ? await draftSuggestions(g, gaps, { llm, model: config.llm.askModel }) : [];
   // Bump the counts on suggestions agents keep asking about.
   const counts = new Map((await findGaps(project, opts.days)).map((x) => [normQ(x.question), x.asked]));

@@ -5,7 +5,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { ProjectConfig, SiteGraph } from "@agenticweb-dev/core";
-import { createClaudeAsker } from "@agenticweb-dev/runtime";
+import { askerFor } from "@agenticweb-dev/runtime";
 import { serveNode } from "@agenticweb-dev/runtime/node";
 import { createEngine, parseApiKeys } from "@agenticweb-dev/actions";
 import { FileStore } from "@agenticweb-dev/actions/file-store";
@@ -17,7 +17,7 @@ const config = ProjectConfig.parse(JSON.parse(readFileSync(path.join(here, "conf
 const engine = graph.actions.some((a) => a.enabled)
   ? createEngine({ graph, config, env, store: new FileStore(path.join(env.DATA_DIR ?? here, "actions.json")) })
   : undefined;
-const llm = config.llm.enabled && (env.ANTHROPIC_API_KEY || env.ANTHROPIC_AUTH_TOKEN) ? await createClaudeAsker() : undefined;
+const llm = await askerFor(config.llm, env);
 const edgeOrigin = env.EDGE_ORIGIN || (env.EDGE_MODE === "1" ? config.edge.origin : undefined);
 const server = await serveNode({
   graph,

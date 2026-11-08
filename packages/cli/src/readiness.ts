@@ -2,10 +2,10 @@ import { existsSync } from "node:fs";
 import { appendFile, mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { z } from "zod";
-import type { ActionDef, ProjectConfig, SiteGraph } from "@agenticweb-dev/core";
-import { createApp, createClaudeAsker, type ActionEngine, type ActionResult, type AskLlm } from "@agenticweb-dev/runtime";
+import { chatCompletion, maxTokens, resolveLlm, type ActionDef, type ChatMessage, type ProjectConfig, type ResolvedLlm, type SiteGraph } from "@agenticweb-dev/core";
+import { askerFor, createApp, type ActionEngine, type ActionResult, type AskLlm } from "@agenticweb-dev/runtime";
 import { MemoryStore, OutboxNotifier, createEngine } from "@agenticweb-dev/actions";
-import { hasClaudeCredentials } from "@agenticweb-dev/understand";
+import { apiKeyEnvFor } from "@agenticweb-dev/understand";
 import { Project, UserError } from "./project.ts";
 
 /**
@@ -54,7 +54,9 @@ export type Check = { id: string; label: string; ok: boolean; detail?: string };
 export type ReadinessReport = {
   site: string;
   target: string;
-  mode: "claude" | "built-in";
+  mode: "ai" | "built-in";
+  /** Which AI did the tasks, e.g. Claude, OpenAI, DeepSeek, Gemini. */
+  provider?: string;
   model?: string;
   ranAt: string;
   score: number;
@@ -281,7 +283,7 @@ export async function crawlForAnswer(site: string, expect: string[], opts: { max
 
 async function builtInAgentArm(task: ReadinessTask, branch: { fetcher: Fetcher; baseUrl: string }): Promise<ArmOutcome> {
   if (task.action) {
-    if (!task.input) return { ran: false, success: false, requests: 0, tokens: 0, note: "needs Claude (set ANTHROPIC_API_KEY) or an `input` to run without it" };
+    if (!task.input) return { ran: false, success: false, requests: 0, tokens: 0, note: "needs an AI key (see llm.provider) or an `input` to run without it" };
     const res = await branch.fetcher(
       new Request(`${branch.baseUrl}/api/${task.action}`, {
         method: "POST",
@@ -327,16 +329,12 @@ const SYSTEM = (site: string, mode: "agent" | "human") =>
     "If you can't do the task, say so plainly.",
   ].join("\n");
 
-export async function claudeLoop(args: {
-  client: ClaudeClient;
-  model: string;
-  effort: string;
-  system: string;
-  task: string;
-  tools: ToolDef[];
-  run: (name: string, input: unknown) => Promise<ToolOut>;
-  maxTurns: number;
-}): Promise<{ answer: string; requests: number; tokens: number; costUsd?: number; calls: string[]; results: Array<{ name: string; status?: string; isError?: boolean }>; note?: string }> {
+export type LoopArgs = { system: string; task: string; tools: ToolDef[]; run: (name: string, input: unknown) => Promise<ToolOut>; maxTurns: number };
+export type LoopResult = { answer: string; requests: number; tokens: number; costUsd?: number; calls: string[]; results: Array<{ name: string; status?: string; isError?: boolean }>; note?: string };
+/** An AI agent working through a task with tools. */
+export type AgentLoop = (args: LoopArgs) => Promise<LoopResult>;
+
+export async function claudeLoop(args: LoopArgs & { client: ClaudeClient; model: string; effort: string }): Promise<LoopResult> {
   const messages: Array<{ role: "user" | "assistant"; content: unknown }> = [{ role: "user", content: args.task }];
   let input = 0;
   let output = 0;
@@ -387,17 +385,49 @@ export async function claudeLoop(args: {
   return done("", `stopped after ${args.maxTurns} turns`);
 }
 
-async function claudeAgentArm(
+/** The same loop over Chat Completions tool calls (OpenAI, DeepSeek, Gemini, OpenAI-compatible APIs). */
+export async function chatCompletionsLoop(args: LoopArgs & { r: ResolvedLlm; model: string; fetch?: typeof fetch }): Promise<LoopResult> {
+  const messages: ChatMessage[] = [
+    { role: "system", content: args.system },
+    { role: "user", content: args.task },
+  ];
+  const tools = args.tools.map((t) => ({ type: "function", function: { name: t.name, description: t.description, parameters: t.input_schema } }));
+  let tokens = 0;
+  const calls: string[] = [];
+  const results: LoopResult["results"] = [];
+  const done = (answer: string, note?: string): LoopResult => ({ answer, requests: calls.length, tokens, calls, results, note });
+  for (let turn = 0; turn < args.maxTurns; turn++) {
+    const res = await chatCompletion(args.r, { model: args.model, messages, tools, ...maxTokens(args.r, 8000) }, args.fetch);
+    tokens += (res.usage?.prompt_tokens ?? 0) + (res.usage?.completion_tokens ?? 0);
+    const choice = res.choices[0];
+    if (!choice) return done("", `${args.r.label} returned no answer`);
+    const msg = choice.message;
+    if (msg.refusal || choice.finish_reason === "content_filter") return done(msg.content ?? "", `${args.r.label} declined the task`);
+    messages.push({ role: "assistant", content: msg.content ?? null, ...(msg.tool_calls?.length ? { tool_calls: msg.tool_calls } : {}) });
+    if (!msg.tool_calls?.length) return done((msg.content ?? "").trim(), choice.finish_reason === "length" ? "the answer was cut off" : undefined);
+    for (const call of msg.tool_calls) {
+      calls.push(call.function.name);
+      let out: ToolOut;
+      try {
+        out = await args.run(call.function.name, call.function.arguments ? JSON.parse(call.function.arguments) : {});
+      } catch (err) {
+        out = { text: `Error: ${(err as Error).message}`, isError: true };
+      }
+      results.push({ name: call.function.name, status: out.status, isError: out.isError });
+      messages.push({ role: "tool", tool_call_id: call.id, content: out.text.slice(0, 40_000) || "(empty)" });
+    }
+  }
+  return done("", `stopped after ${args.maxTurns} turns`);
+}
+
+async function aiAgentArm(
   task: ReadinessTask,
-  ctx: { client: ClaudeClient; model: string; effort: string; maxTurns: number; site: string; branch: { fetcher: Fetcher; baseUrl: string }; remote: boolean; actions: ActionDef[] },
+  ctx: { loop: AgentLoop; maxTurns: number; site: string; branch: { fetcher: Fetcher; baseUrl: string }; remote: boolean; actions: ActionDef[] },
 ): Promise<ArmOutcome> {
   const mcp = await connectMcp(ctx.branch);
   try {
     const tools = (await mcp.listTools()).map((t) => ({ name: t.name, description: t.description ?? "", input_schema: t.inputSchema }));
-    const r = await claudeLoop({
-      client: ctx.client,
-      model: ctx.model,
-      effort: ctx.effort,
+    const r = await ctx.loop({
       maxTurns: ctx.maxTurns,
       system: SYSTEM(ctx.site, "agent"),
       task: task.task,
@@ -421,13 +451,10 @@ async function claudeAgentArm(
   }
 }
 
-async function claudeHumanArm(task: ReadinessTask, ctx: { client: ClaudeClient; model: string; effort: string; maxTurns: number; site: string; fetch?: typeof fetch }): Promise<ArmOutcome> {
+async function aiHumanArm(task: ReadinessTask, ctx: { loop: AgentLoop; maxTurns: number; site: string; fetch?: typeof fetch }): Promise<ArmOutcome> {
   const f = ctx.fetch ?? fetch;
   const origin = new URL(ctx.site);
-  const r = await claudeLoop({
-    client: ctx.client,
-    model: ctx.model,
-    effort: ctx.effort,
+  const r = await ctx.loop({
     maxTurns: ctx.maxTurns,
     system: SYSTEM(ctx.site, "human"),
     task: task.task,
@@ -483,7 +510,7 @@ export function reportMarkdown(r: ReadinessReport): string {
   const lines = [
     `# Agent Readiness: ${r.score}/100`,
     "",
-    `${r.site}, tested ${r.ranAt.slice(0, 16).replace("T", " ")} UTC against ${r.target}. ${r.mode === "claude" ? `Tasks were done by Claude (${r.model}) using tools.` : "Built-in mode: no Claude. Lookups use /ask; actions run with the input in the tasks file."}`,
+    `${r.site}, tested ${r.ranAt.slice(0, 16).replace("T", " ")} UTC against ${r.target}. ${r.mode === "ai" ? `Tasks were done by ${r.provider ?? "an AI agent"} (${r.model}) using tools.` : "Built-in mode: no AI. Lookups use /ask; actions run with the input in the tasks file."}`,
     "",
     `- **Tasks:** ${t.passed} of ${t.total} done on the agent branch${t.humanRan ? `, ${t.humanPassed} of ${t.humanRan} on the human site` : ""}.`,
     `- **Basics:** ${r.checks.filter((c) => c.ok).length} of ${r.checks.length} checks pass.`,
@@ -548,8 +575,9 @@ export type TestOptions = {
   /** Exit with an error when a task that passed last time fails now. */
   strict?: boolean;
   only?: string;
-  /** For tests: a scripted Claude client and fetch for the human site. */
+  /** For tests: a scripted Claude client, a fetch for Chat Completions providers, and a fetch for the human site. */
   client?: ClaudeClient;
+  fetchLlm?: typeof fetch;
   fetchHuman?: typeof fetch;
 };
 
@@ -573,25 +601,40 @@ export async function cmdTest(project: Project, opts: TestOptions = {}, out = { 
   if (opts.only) tasks = tasks.filter((t) => t.id === opts.only);
   if (!tasks.length) throw new UserError(opts.only ? `No task "${opts.only}" in ${TASKS_FILE}.` : `${TASKS_FILE} has no tasks.`);
 
-  const useClaude = !opts.noLlm && (Boolean(opts.client) || (config.llm.enabled && hasClaudeCredentials()));
-  let client = opts.client;
-  if (useClaude && !client) {
-    const { default: Anthropic } = await import("@anthropic-ai/sdk");
-    client = new Anthropic() as unknown as ClaudeClient;
+  const ai = opts.noLlm ? undefined : opts.client ? { provider: "anthropic" as const, label: "Claude" } : resolveLlm(config.llm, process.env);
+  const useAi = Boolean(ai);
+  let loop: AgentLoop | undefined;
+  let model = config.tests.model;
+  if (ai && (ai.provider === "anthropic" || opts.client)) {
+    let client = opts.client;
+    if (!client) {
+      const { default: Anthropic } = await import("@anthropic-ai/sdk");
+      const r = ai as ResolvedLlm;
+      client = (r.apiKey ? new Anthropic({ apiKey: r.apiKey }) : new Anthropic()) as unknown as ClaudeClient;
+      model = r.model(config.tests.model);
+    }
+    const c = client;
+    const m = model;
+    loop = (a) => claudeLoop({ ...a, client: c, model: m, effort: config.tests.effort });
+  } else if (ai) {
+    const r = ai as ResolvedLlm;
+    model = r.model(config.tests.model);
+    const m = model;
+    loop = (a) => chatCompletionsLoop({ ...a, r, model: m, fetch: opts.fetchLlm });
   }
-  const llm = useClaude && !opts.client ? await createClaudeAsker() : undefined;
+  // The local agent branch writes /ask answers with the same provider, like a real deployment would.
+  const llm = useAi && !opts.client ? await askerFor(config.llm, process.env, opts.fetchLlm) : undefined;
   const branch = opts.url ? remoteAgentBranch(opts.url) : await localAgentBranch(graph, config, { llm });
-  const model = config.tests.model;
-  const ctx = { client: client!, model, effort: config.tests.effort, maxTurns: config.tests.maxTurns, site: config.site };
+  const ctx = { loop: loop!, maxTurns: config.tests.maxTurns, site: config.site };
   const enabled = graph.actions.filter((a) => a.enabled);
 
-  out.log(`Testing ${tasks.length} task(s) on ${opts.url ?? "a local copy of your agent branch"}${useClaude ? ` with Claude (${model})` : " in built-in mode (set ANTHROPIC_API_KEY to test with Claude)"}…`);
+  out.log(`Testing ${tasks.length} task(s) on ${opts.url ?? "a local copy of your agent branch"}${useAi ? ` with ${ai!.label} (${model})` : ` in built-in mode (set ${apiKeyEnvFor(config.llm)} to test with an AI agent)`}…`);
   const outcomes: TaskOutcome[] = [];
   for (const t of tasks) {
-    const agent = useClaude ? await claudeAgentArm(t, { ...ctx, branch, remote: Boolean(opts.url), actions: enabled }) : await builtInAgentArm(t, branch);
+    const agent = useAi ? await aiAgentArm(t, { ...ctx, branch, remote: Boolean(opts.url), actions: enabled }) : await builtInAgentArm(t, branch);
     let human: ArmOutcome | undefined;
     if (t.human && !t.action && t.expect.length) {
-      human = useClaude ? await claudeHumanArm(t, { ...ctx, fetch: opts.fetchHuman }) : await crawlForAnswer(config.site, t.expect, { fetch: opts.fetchHuman });
+      human = useAi ? await aiHumanArm(t, { ...ctx, fetch: opts.fetchHuman }) : await crawlForAnswer(config.site, t.expect, { fetch: opts.fetchHuman });
     } else if (t.action) human = { ran: false, success: false, requests: 0, tokens: 0, note: "not run: it would submit forms on your live site" };
     outcomes.push({ id: t.id, task: t.task, agent, human });
     out.log(`  ${agent.ran ? (agent.success ? "✓" : "✗") : "-"} ${t.id}${agent.note ? `: ${agent.note}` : ""}`);
@@ -614,8 +657,8 @@ export async function cmdTest(project: Project, opts: TestOptions = {}, out = { 
   const report: ReadinessReport = {
     site: config.site,
     target: opts.url ?? "a local copy of the agent branch",
-    mode: useClaude ? "claude" : "built-in",
-    ...(useClaude ? { model } : {}),
+    mode: useAi ? "ai" : "built-in",
+    ...(useAi ? { provider: ai!.label, model } : {}),
     ranAt: new Date().toISOString(),
     score: readinessScore(outcomes, checks),
     tasks: outcomes,

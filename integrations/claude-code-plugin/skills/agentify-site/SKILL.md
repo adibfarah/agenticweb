@@ -17,7 +17,7 @@ Use `npx agenticweb-cli@latest <command>`. If you are inside the AgenticWeb repo
    - The user must own the site. If the CLI prints DNS TXT or file instructions, show them to the user, explain them simply, and wait. Never try to bypass verification, and never build an agent branch for a site the user doesn't control.
    - Local development sites (localhost, *.test) skip verification.
 2. **Verify.** After the user says the record or file is in place: `agenticweb verify`.
-3. **Build.** `agenticweb build`. With `ANTHROPIC_API_KEY` set, Claude extracts menus, products, services and policies. Without it, built-in rules still produce a useful result; mention that a key gives richer output, but don't ask for the key itself. The user sets it in their own environment.
+3. **Build.** `agenticweb build`. With an AI key set (`ANTHROPIC_API_KEY` by default; OpenAI, DeepSeek, Gemini or a local model via `llm.provider`), the AI extracts menus, products, services and policies. Without it, built-in rules still produce a useful result; mention that a key gives richer output, but don't ask for the key itself. The user sets it in their own environment.
 4. **Review with the user.** Run `agenticweb status` and `agenticweb actions`. Summarise what was found: pages, data types and counts, and draft actions. Open a few files in `agent-branch/` (`llms.txt`, `pages/*.md`, `data/*.json`) and point out anything that looks wrong or private.
    - Hide anything the user doesn't want agents to see: `agenticweb hide <page-slug|entity-id>`.
    - Actions are **off by default**. Only enable one when the user explicitly says so: `agenticweb actions enable <name>`. Explain its confirmation level first (guest confirms by email, owner approves, checkout link, and so on).

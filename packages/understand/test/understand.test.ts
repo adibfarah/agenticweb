@@ -149,3 +149,26 @@ describe("contact details", () => {
     expect(g.site.contact.phone).toBeUndefined();
   });
 });
+
+describe("other AI providers", () => {
+  it("reads the site with a Chat Completions provider", async () => {
+    const { llmFromSettings } = await import("../src/index.ts");
+    const { ProjectConfig } = await import("@agenticweb-dev/core");
+    const settings = ProjectConfig.parse({ site: sites.restaurant, llm: { provider: "gemini" } }).llm;
+    expect(llmFromSettings(settings, {})).toBeUndefined();
+    const models: string[] = [];
+    const f = (async (_u: string | URL | Request, init?: RequestInit) => {
+      const body = JSON.parse(String(init?.body)) as { model: string };
+      models.push(body.model);
+      // An empty but valid reply for any extraction step: the build falls back to built-in rules where it's thin.
+      return new Response(JSON.stringify({ choices: [{ message: { content: "{}" }, finish_reason: "stop" }] }));
+    }) as typeof fetch;
+    const ai = llmFromSettings(settings, { GEMINI_API_KEY: "k" }, f)!;
+    expect(ai.label).toBe("Gemini");
+    const { z } = await import("zod");
+    const out = await ai.llm.extract({ model: "claude-opus-5-5", system: "s", content: "c", schema: z.object({ name: z.string().optional() }) });
+    expect(out).toEqual({});
+    expect(models).toEqual(["gemini-3-flash-preview"]);
+    expect(ai.llm.readDocument).toBeUndefined();
+  });
+});

@@ -1,4 +1,5 @@
 import type { z } from "zod";
+import { extractJson, resolveLlm, type LlmSettings } from "@agenticweb-dev/core";
 import type { AskLlm } from "./ask.ts";
 
 /**
@@ -25,4 +26,18 @@ export async function createClaudeAsker(opts: { apiKey?: string } = {}): Promise
       return r.parsed_output as z.infer<T>;
     },
   };
+}
+
+/**
+ * The /ask writer for the configured AI provider, or undefined when AI is off or no key is set (then /ask
+ * answers from search). Claude uses the Anthropic SDK; other providers use Chat Completions over fetch.
+ */
+export async function askerFor(s: LlmSettings, env: Record<string, string | undefined>, f?: typeof fetch): Promise<(AskLlm & { label: string }) | undefined> {
+  const r = resolveLlm(s, env);
+  if (!r) return undefined;
+  if (r.provider === "anthropic") {
+    const claude = await createClaudeAsker({ apiKey: r.apiKey });
+    return { label: r.label, extract: (a) => claude.extract({ ...a, model: r.model(a.model) }) };
+  }
+  return { label: r.label, extract: (a) => extractJson(r, a, f) };
 }

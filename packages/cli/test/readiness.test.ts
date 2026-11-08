@@ -129,7 +129,8 @@ describe("agent readiness tests", () => {
     await writeFile(path.join(dir, TASKS_FILE), JSON.stringify(tasks(date)));
     const client = scriptedClaude(date);
     const r = (await cmdTest(new Project(dir), { client }, out))!;
-    expect(r.mode).toBe("claude");
+    expect(r.mode).toBe("ai");
+    expect(r.provider).toBe("Claude");
     const byId = Object.fromEntries(r.tasks.map((t) => [t.id, t]));
     expect(byId["vegan-pizza"]!.agent.calls).toEqual(["ask"]);
     expect(byId["vegan-pizza"]!.agent.success).toBe(true);
@@ -160,4 +161,55 @@ describe("agent readiness tests", () => {
     expect(body.data?.simulated).toBe(true);
     expect(branch.outbox.sent).toHaveLength(0);
   });
+});
+
+describe("agent readiness tests with another AI provider", () => {
+  it("drives a Chat Completions agent (DeepSeek here) through the real MCP server", async () => {
+    const date = inTwoWeeks();
+    const project = new Project(dir);
+    const cfgFile = path.join(dir, "agenticweb.config.json");
+    const original = await readFile(cfgFile, "utf8");
+    await writeFile(cfgFile, JSON.stringify({ ...JSON.parse(original), llm: { provider: "deepseek" } }));
+    await writeFile(path.join(dir, TASKS_FILE), JSON.stringify(tasks(date)));
+    const seen: string[] = [];
+    const fetchLlm = (async (url: string | URL | Request, init?: RequestInit) => {
+      seen.push(String(url));
+      const body = JSON.parse(String(init?.body)) as { model: string; tools?: unknown[]; response_format?: unknown; messages: Array<{ role: string; content: string | null }> };
+      expect(body.model).toBe("deepseek-flash");
+      const reply = (message: Record<string, unknown>) => new Response(JSON.stringify({ choices: [{ message, finish_reason: "stop" }], usage: { prompt_tokens: 100, completion_tokens: 20 } }));
+      // /ask on the local agent branch, written by the same provider.
+      if (body.response_format) {
+        const sources = body.messages.at(-1)!.content ?? "";
+        return reply({ content: JSON.stringify({ found: true, answer: sources.slice(0, 3000), used: [1] }) });
+      }
+      const last = body.messages.at(-1)!;
+      if (last.role === "user") {
+        const task = last.content ?? "";
+        if (body.tools!.some((t) => (t as { function: { name: string } }).function.name === "fetch_page")) {
+          return reply({ content: null, tool_calls: [{ id: "c1", type: "function", function: { name: "fetch_page", arguments: JSON.stringify({ url: "/" }) } }] });
+        }
+        const call = /book a table/i.test(task)
+          ? { name: "request_booking", arguments: JSON.stringify({ date, time: "19:00", party_size: 4, name: "Sam Lee", email: "sam@example.com", idempotency_key: "k-ds" }) }
+          : { name: "ask", arguments: JSON.stringify({ query: task }) };
+        return reply({ content: null, tool_calls: [{ id: "c1", type: "function", function: call }] });
+      }
+      return reply({ content: `Here is what I found: ${(last.content ?? "").slice(0, 3000)}` });
+    }) as typeof fetch;
+    const prev = process.env.DEEPSEEK_API_KEY;
+    process.env.DEEPSEEK_API_KEY = "test-key";
+    try {
+      const r = (await cmdTest(project, { fetchLlm }, out))!;
+      expect(r).toMatchObject({ mode: "ai", provider: "DeepSeek", model: "deepseek-flash" });
+      const byId = Object.fromEntries(r.tasks.map((t) => [t.id, t]));
+      expect(byId["vegan-pizza"]!.agent).toMatchObject({ success: true, calls: ["ask"] });
+      expect(byId.book!.agent.success, byId.book!.agent.note).toBe(true);
+      expect(byId["sunday-close"]!.human!.calls).toEqual(["fetch_page"]);
+      expect(byId["vegan-pizza"]!.agent.tokens).toBe(240);
+      expect(seen.every((u) => u === "https://api.deepseek.com/chat/completions")).toBe(true);
+    } finally {
+      if (prev === undefined) delete process.env.DEEPSEEK_API_KEY;
+      else process.env.DEEPSEEK_API_KEY = prev;
+      await writeFile(cfgFile, original);
+    }
+  }, 60_000);
 });

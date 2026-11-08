@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { ActionBackend, ActionField, ActionKind, Confirmation } from "./schema.ts";
+import { PROVIDER_IDS } from "./llm-providers.ts";
 
 /** An owner's edit to one action. No defaults: anything not written stays as discovered. */
 export const ActionOverride = z.object({
@@ -19,6 +20,7 @@ export type ActionOverride = z.infer<typeof ActionOverride>;
 const crawlDefaults = { maxPages: 200, include: [], exclude: [], render: "fetch" as const, respectRobots: true, concurrency: 4 };
 const llmDefaults = {
   enabled: true,
+  provider: "anthropic" as const,
   classifyModel: "claude-opus-5-5",
   extractModel: "claude-opus-5-5",
   actionsModel: "claude-opus-5-5",
@@ -70,6 +72,14 @@ export const ProjectConfig = z.object({
   llm: z
     .object({
       enabled: z.boolean().default(true),
+      /** Which AI to use: Claude (default), OpenAI, DeepSeek, Gemini, or any OpenAI-compatible API (including local ones). */
+      provider: z.enum(PROVIDER_IDS).default("anthropic"),
+      /** API address for "openai-compatible", e.g. http://localhost:11434/v1 for Ollama. */
+      baseUrl: z.string().url().optional(),
+      /** Env var holding the API key, if not the provider's usual one (ANTHROPIC_API_KEY, OPENAI_API_KEY, DEEPSEEK_API_KEY, GEMINI_API_KEY, LLM_API_KEY). */
+      apiKeyEnv: z.string().optional(),
+      /** One model for every step. Without it, non-Claude providers use their own default model. */
+      model: z.string().optional(),
       classifyModel: z.string().default(llmDefaults.classifyModel),
       extractModel: z.string().default(llmDefaults.extractModel),
       actionsModel: z.string().default(llmDefaults.actionsModel),

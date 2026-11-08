@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import type { z } from "zod";
+import { PROVIDERS, extractJson, resolveLlm, type LlmSettings, type ResolvedLlm } from "@agenticweb-dev/core";
 
 /** The one thing the pipeline needs from a language model: structured extraction. */
 export interface Llm {
@@ -80,3 +81,39 @@ export class ClaudeLlm implements Llm {
 export function hasClaudeCredentials(env: NodeJS.ProcessEnv = process.env): boolean {
   return Boolean(env.ANTHROPIC_API_KEY || env.ANTHROPIC_AUTH_TOKEN || env.ANTHROPIC_PROFILE);
 }
+
+/** OpenAI, DeepSeek, Gemini or any OpenAI-compatible API, through Chat Completions. PDFs aren't read with these. */
+export class ChatCompletionsLlm implements Llm {
+  readonly r: ResolvedLlm;
+  private f?: typeof fetch;
+  constructor(r: ResolvedLlm, f?: typeof fetch) {
+    this.r = r;
+    this.f = f;
+  }
+
+  extract<T extends z.ZodType>(args: { model: string; system: string; content: string; schema: T; maxTokens?: number }): Promise<z.infer<T>> {
+    return extractJson(this.r, args, this.f);
+  }
+}
+
+/**
+ * The AI the config asks for, if its key is set: Claude through the Anthropic SDK, anything else through
+ * Chat Completions. Undefined means "use the built-in rules".
+ */
+export function llmFromSettings(s: LlmSettings, env: Record<string, string | undefined> = process.env, f?: typeof fetch): { llm: Llm; label: string; resolved: ResolvedLlm } | undefined {
+  const r = resolveLlm(s, env);
+  if (!r) return undefined;
+  if (r.provider === "anthropic") {
+    const claude = new ClaudeLlm(r.apiKey ? new Anthropic({ apiKey: r.apiKey }) : undefined);
+    // Map the step's model like other providers do, so llm.model applies to Claude too.
+    const llm: Llm = {
+      extract: (a) => claude.extract({ ...a, model: r.model(a.model) }),
+      readDocument: (a) => claude.readDocument({ ...a, model: r.model(a.model) }),
+    };
+    return { llm, label: r.label, resolved: r };
+  }
+  return { llm: new ChatCompletionsLlm(r, f), label: r.label, resolved: r };
+}
+
+/** The env var an owner should set for the configured provider. */
+export const apiKeyEnvFor = (s: Pick<LlmSettings, "provider" | "apiKeyEnv">) => s.apiKeyEnv ?? PROVIDERS[s.provider].apiKeyEnv;
