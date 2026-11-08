@@ -83,9 +83,9 @@ This prepares a Cloudflare Worker for your domain. Not on Cloudflare? Use `--tar
 
 ## Check that it works
 
-- **Test it like an agent.** `agenticweb test` runs your real tasks, like "book a table for 4 on Friday", as an AI agent on both your site and the agent version. You get an **Agent Readiness score**, a badge, and a warning when a task that used to work breaks.
+- **Test it like an agent.** `npx agenticweb-cli test` tries your real tasks, like "book a table for 4 on Friday", on both your site and the agent version (with an AI key, a real AI agent does them). You get an **Agent Readiness score**, a badge, and a warning when a task that used to work breaks.
 - **Prove it's the same story.** Every build checks each fact (prices, hours, contact details) against your live pages and signs the result with your key. Anyone can check it with `npx agenticweb-cli check <agent-branch-url>`.
-- **Fill the gaps.** `agenticweb suggest` turns questions agents asked that your site couldn't answer into drafted FAQ answers. You approve them and add them to your site, and agents pick them up from there.
+- **Fill the gaps.** `npx agenticweb-cli suggest` lists questions agents asked that your site couldn't answer, with a draft answer for each if you have an AI key. You approve them and add them to your site, and agents pick them up from there.
 
 ## Works with
 
@@ -103,10 +103,11 @@ Shopify, WooCommerce, Stripe, Cal.com, any API with an OpenAPI description, any 
 
 More in [SECURITY.md](SECURITY.md).
 
-## Use it from Claude
+## Use it from your AI assistant
 
-- **Claude Code:** run `/plugin marketplace add adibfarah/agenticweb`, then `/agentify https://mysite.com`, and Claude walks you through each step.
-- **Claude Desktop or any MCP app:** add an MCP server with the command `npx` and the arguments `["agenticweb-cli@latest", "mcp"]`.
+- **Any coding assistant** (Claude Code, Codex, Cursor, Gemini CLI and others) can run the `npx agenticweb-cli` commands for you.
+- **Any MCP app** (ChatGPT, Claude Desktop, Cursor, VS Code and others): add an MCP server with the command `npx` and the arguments `["agenticweb-cli@latest", "mcp"]`.
+- **Claude Code plugin:** run `/plugin marketplace add adibfarah/agenticweb`, then `/agentify https://mysite.com` for a guided walkthrough.
 
 ## Learn more
 
