@@ -6,6 +6,8 @@ AI agents now shop, compare and book for people. But websites are built for eyes
 
 AgenticWeb reads a website you own and builds an **agent version** of it next to the real one: the same content, in clean formats agents understand, with safe tools for actions like booking a table or starting a checkout. Your site for people stays exactly as it is.
 
+https://github.com/user-attachments/assets/800ed286-fa7c-4ea2-8629-28ea9f93d51d
+
 ## How much it helps
 
 We gave agents 18 tasks on three demo sites (a restaurant, a shop and a docs site), such as "What time do you close on Sunday?", "Is there a vegan pizza?" and "Put a blue hoodie, size M, in the cart".
